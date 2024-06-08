@@ -69,6 +69,9 @@ def list_accounts():
     This endpoint will list all accounts as a list of dicts and return HTTP 200 OK
     """
     accounts = Account.all()
+    # if not account:
+    #     abort(status.HTTP_200_OK, f"[]")
+    # return account.serialize(), status.HTTP_200_OK
     return jsonify([account.to_dict() for account in accounts]), HTTPStatus.OK
 
 ######################################################################
@@ -93,7 +96,22 @@ def get_accounts(account_id):
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
 
-# ... place you code here to UPDATE an account ...
+@app.route("/accounts/<int:account_id>", methods=["PUT"])
+def update_account(account_id):
+    """
+    Updates an Account
+    This endpoint will update an Account based on the account_id that is provided
+    """
+    app.logger.info("Request to update an Account with id: %s", account_id)
+    account = Account.find(account_id)
+    if not account:
+        abort(HTTPStatus.NOT_FOUND, f"Account with id [{account_id}] could not be found.")
+    
+    # Update account details based on the request JSON
+    data = request.get_json()
+    account.deserialize(data)
+    
+    return jsonify(account.serialize()), HTTPStatus.OK
 
 
 ######################################################################
