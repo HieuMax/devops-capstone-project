@@ -124,3 +124,40 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
+    def test_get_account(self):
+        """It should Read a single Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.get(
+            f"{BASE_URL}/{account.id}", content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], account.name)
+
+    def test_get_account_not_found(self):
+        """It should not Read an Account that is not found"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_accounts(self):
+        """It should return all accounts as a list of dict and HTTP 200 OK"""
+        # Ensure there are no accounts initially
+        Account.accounts = []
+
+        # Test with no accounts
+        resp = self.app.get('/accounts')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data, [])
+
+        # Create some test accounts
+        self._create_accounts(3)
+
+        # Test with some accounts
+        resp = self.app.get('/accounts')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0]['name'], 'Account 0')
+        self.assertEqual(data[1]['name'], 'Account 1')
+        self.assertEqual(data[2]['name'], 'Account 2')
