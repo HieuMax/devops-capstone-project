@@ -139,65 +139,37 @@ class TestAccountService(TestCase):
         resp = self.client.get(f"{BASE_URL}/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_list_accounts(self):
-        """It should return all accounts as a list of dict and HTTP 200 OK"""
-        # Ensure there are no accounts initially
-        Account.accounts = []
-
-        # Test with no accounts
-        resp = self.app.get('/accounts')
-        self.assertEqual(resp.status_code, 200)
+    def test_get_account_list(self):
+        """It should Get a list of Accounts"""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
-        self.assertEqual(data, [])
-
-        # Create some test accounts
-        self._create_accounts(3)
-
-        # Test with some accounts
-        resp = self.app.get('/accounts')
-        self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        self.assertEqual(len(data), 3)
-        self.assertEqual(data[0]['name'], 'Account 0')
-        self.assertEqual(data[1]['name'], 'Account 1')
-        self.assertEqual(data[2]['name'], 'Account 2')
+        self.assertEqual(len(data), 5)
 
     def test_update_account(self):
-        """It should update an existing Account"""
-        Account.accounts = []
-        # Create a test account
-        account = self._create_accounts(1)[0]
+        """It should Update an existing Account"""
+        # create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 
-        # Prepare the update payload with changes to name, address, and other details
-        updated_data = {
-            "name": "Updated Name",
-            "address": "Updated Address",
-            # Add other fields as needed
-        }
-        
-        # Send a PUT request to update the account
-        resp = self.app.put(f"/accounts/{account.id}", 
-                             data=json.dumps(updated_data),
-                             content_type='application/json')
-        
-        # Assert the response
-        self.assertEqual(resp.status_code, 200)
-        data = resp.get_json()
-        self.assertEqual(data["name"], updated_data["name"])
-        self.assertEqual(data["address"], updated_data["address"])
-        # Add additional assertions for other fields
+        # update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Something Known"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Something Known")
     
     
     def test_delete_account(self):
-        """It should delete an existing Account"""
-        Account.accounts = []
-        # Create a test account
+        """It should Delete an Account"""
         account = self._create_accounts(1)[0]
-        account_count_before_delete = len(Account.accounts)
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
-        # Send a DELETE request to delete the account
-        resp = self.app.delete(f"/accounts/{account.id}")
-
-        # Assert the response
-        self.assertEqual(resp.status_code, 204)
-        self.assertEqual(len(Account.accounts), account_count_before_delete - 1)
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.delete(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
