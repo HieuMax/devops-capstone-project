@@ -186,3 +186,18 @@ class TestAccountService(TestCase):
         self.assertEqual(data["name"], updated_data["name"])
         self.assertEqual(data["address"], updated_data["address"])
         # Add additional assertions for other fields
+    
+    
+    def test_delete_account(self):
+        """It should delete an existing Account"""
+        Account.accounts = []
+        # Create a test account
+        account = self._create_accounts(1)[0]
+        account_count_before_delete = len(Account.accounts)
+
+        # Send a DELETE request to delete the account
+        resp = self.app.delete(f"/accounts/{account.id}")
+
+        # Assert the response
+        self.assertEqual(resp.status_code, 204)
+        self.assertEqual(len(Account.accounts), account_count_before_delete - 1)
