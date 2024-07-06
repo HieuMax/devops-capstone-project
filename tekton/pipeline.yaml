@@ -15,7 +15,6 @@ spec:
     - name: repo-url
     - name: branch
       default: main
-    - name: build-image
   tasks:
     - name: init
       workspaces:
