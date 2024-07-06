@@ -23,16 +23,16 @@ spec:
       taskRef:
         name: cleanup
 
-    - name: clone
+    - name: lint
       workspaces:
-        - name: output
+        - name: source
           workspace: pipeline-workspace          
       taskRef:
-        name: git-clone
+        name: flake8
       params:
-      - name: url
-        value: $(params.repo-url)
-      - name: revision
-        value: $(params.branch)
+      - name: image
+        value: "python:3.9-slim"
+      - name: args
+        value: ["--count", "--max-complexity=10", "--max-line-length=127", "--statistics"]
       runAfter:
-        - init
+        - clone
